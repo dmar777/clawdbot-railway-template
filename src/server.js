@@ -35,28 +35,38 @@ const STATE_DIR =
 
 const CONTROL_UI_ALLOWED_ORIGIN = process.env.CONTROL_UI_ALLOWED_ORIGIN?.trim();
 
-(function ensureOpenClawConfig() {
+function ensureOpenClawConfig() {
   if (!CONTROL_UI_ALLOWED_ORIGIN) return;
 
-  const cfgPath = process.env.OPENCLAW_CONFIG_PATH?.trim() || path.join(STATE_DIR, "openclaw.json");
+  const cfgPath =
+    process.env.OPENCLAW_CONFIG_PATH?.trim() ||
+    path.join(STATE_DIR, "openclaw.json");
 
   let cfg = {};
   try {
     if (fs.existsSync(cfgPath)) {
       cfg = JSON.parse(fs.readFileSync(cfgPath, "utf8"));
     }
-  } catch {
+  } catch (err) {
+    console.warn("[openclaw-config] failed to read existing config, recreating", err?.message || err);
     cfg = {};
   }
 
   cfg.gateway = cfg.gateway || {};
   cfg.gateway.controlUi = cfg.gateway.controlUi || {};
   cfg.gateway.controlUi.allowedOrigins = [CONTROL_UI_ALLOWED_ORIGIN];
-  cfg.gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback = true;
+
+  if (cfg.gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback === undefined) {
+    cfg.gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback = true;
+  }
 
   fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
   fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2), "utf8");
-})();
+
+  console.log(`[openclaw-config] wrote controlUi config to ${cfgPath}`);
+}
+
+ensureOpenClawConfig();
 
 
 const WORKSPACE_DIR =
