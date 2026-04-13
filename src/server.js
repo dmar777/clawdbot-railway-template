@@ -33,6 +33,32 @@ const STATE_DIR =
   process.env.OPENCLAW_STATE_DIR?.trim() ||
   path.join(os.homedir(), ".openclaw");
 
+const CONTROL_UI_ALLOWED_ORIGIN = process.env.CONTROL_UI_ALLOWED_ORIGIN?.trim();
+
+(function ensureOpenClawConfig() {
+  if (!CONTROL_UI_ALLOWED_ORIGIN) return;
+
+  const cfgPath = process.env.OPENCLAW_CONFIG_PATH?.trim() || path.join(STATE_DIR, "openclaw.json");
+
+  let cfg = {};
+  try {
+    if (fs.existsSync(cfgPath)) {
+      cfg = JSON.parse(fs.readFileSync(cfgPath, "utf8"));
+    }
+  } catch {
+    cfg = {};
+  }
+
+  cfg.gateway = cfg.gateway || {};
+  cfg.gateway.controlUi = cfg.gateway.controlUi || {};
+  cfg.gateway.controlUi.allowedOrigins = [CONTROL_UI_ALLOWED_ORIGIN];
+  cfg.gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback = true;
+
+  fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
+  fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2), "utf8");
+})();
+
+
 const WORKSPACE_DIR =
   process.env.OPENCLAW_WORKSPACE_DIR?.trim() ||
   path.join(STATE_DIR, "workspace");
