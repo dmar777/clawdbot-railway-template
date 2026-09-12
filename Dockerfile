@@ -16,16 +16,17 @@ RUN apt-get update \
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 
-RUN corepack enable
+# Node 26 no longer bundles Corepack, so install pnpm directly.
+RUN npm install -g pnpm@10.23.0
 
 WORKDIR /openclaw
 
-# Pin to a known-good  (tag/branch). Override in Railway template settings if needed.
-# Using a released tag avoids build breakage when `main` temporarily erences unpublished packages.
+# Pin to a known-good ref (tag/branch). Override in Railway template settings if needed.
+# Using a released tag avoids build breakage when `main` temporarily references unpublished packages.
 ARG OPENCLAW_GIT_REF=v2026.9.4
 RUN git clone --depth 1 --branch "${OPENCLAW_GIT_REF}" https://github.com/openclaw/openclaw.git .
 
-# Patch: relax version requirements for packages that may erence unpublished versions.
+# Patch: relax version requirements for packages that may reference unpublished versions.
 # Apply to all extension package.json files to handle workspace protocol (workspace:*).
 RUN set -eux; \
   find ./extensions -name 'package.json' -type f | while read -r f; do \
@@ -51,8 +52,9 @@ RUN apt-get update \
     python3-venv \
   && rm -rf /var/lib/apt/lists/*
 
-# `openclaw update` expects pnpm. Provide it in the runtime image.
-RUN corepack enable && corepack prepare pnpm@10.23.0 --activate
+# `openclaw update` expects pnpm. Node 26 does not bundle Corepack,
+# so install the required pnpm version directly.
+RUN npm install -g pnpm@10.23.0
 
 # Persist user-installed tools by default by targeting the Railway volume.
 # - npm global installs -> /data/npm
