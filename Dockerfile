@@ -22,8 +22,8 @@ WORKDIR /openclaw
 
 # Pin to a known-good  (tag/branch). Override in Railway template settings if needed.
 # Using a released tag avoids build breakage when `main` temporarily erences unpublished packages.
-ARG OPENCLAW_GIT_=v2026.9.4
-RUN git clone --depth 1 --branch "${OPENCLAW_GIT_}" https://github.com/openclaw/openclaw.git .
+ARG OPENCLAW_GIT_REF=v2026.9.4
+RUN git clone --depth 1 --branch "${OPENCLAW_GIT_REF}" https://github.com/openclaw/openclaw.git .
 
 # Patch: relax version requirements for packages that may erence unpublished versions.
 # Apply to all extension package.json files to handle workspace protocol (workspace:*).
@@ -57,7 +57,7 @@ RUN corepack enable && corepack prepare pnpm@10.23.0 --activate
 # Persist user-installed tools by default by targeting the Railway volume.
 # - npm global installs -> /data/npm
 # - pnpm global installs -> /data/pnpm (binaries) + /data/pnpm-store (store)
-ENV NPM_CONFIG_PIX=/data/npm
+ENV NPM_CONFIG_PREFIX=/data/npm
 ENV NPM_CONFIG_CACHE=/data/npm-cache
 ENV PNPM_HOME=/data/pnpm
 ENV PNPM_STORE_DIR=/data/pnpm-store
